@@ -28,8 +28,9 @@ public class UserFactory {
     private static User populateUserFields(User user, RegistrationDto dto, Role role) {
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword()); // password will be encoded in service
-        user.setRole(role);
+		user.setPassword(dto.getPassword()); // password will be encoded in service
+		user.setRole(role);
+		user.setProfileImagePath(dto.getProfileImagePath());
         return user;
     }
 }

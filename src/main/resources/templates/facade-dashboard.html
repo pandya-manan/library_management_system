@@ -1,109 +1,124 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Library Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .dashboard-container {
-            max-width: 1200px;
-        }
-        .users-card {
-            background-color: #e9f7fe;
-            border-color: #007bff !important;
-        }
-        .books-card {
-            background-color: #e9fcef;
-            border-color: #28a745 !important;
-        }
-        .card-title {
-            font-weight: 600;
-        }
-        .user-item, .book-item {
-            transition: background-color 0.2s;
-        }
-        .user-item:hover, .book-item:hover {
-            background-color: rgba(0,0,0,0.03);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Dashboard | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-light py-4">
-    <div class="container dashboard-container">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="card-title text-primary mb-4">Library Management Dashboard</h2>
-                <form th:action="@{/logout}" method="post">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-box-arrow-right me-2"></i>Logout
-                    </button>
-                </form>
-                </div>
-                <div class="row g-4">
-                    <!-- Users Card -->
-                    <div class="col-md-6">
-                        <div class="card h-100 users-card border-2">
-                            <div class="card-body">
-                                <h4 class="card-title text-primary mb-3">
-                                    <i class="bi bi-people-fill me-2"></i>User Management
-                                </h4>
-                                <h5 class="text-muted">Registered Users</h5>
-                                <div class="list-group list-group-flush">
-                                    <div th:each="user : ${users}" class="list-group-item user-item py-3">
-                                        <strong th:text="${user.name}" class="d-block"></strong>
-                                        <small class="text-muted" th:text="'(' + ${user.type} + ')'"></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 text-gray-800">
 
-                    <!-- Books Card -->
-                    <div class="col-md-6">
-                        <div class="card h-100 books-card border-2">
-                            <div class="card-body">
-                                <h4 class="card-title text-success mb-3">
-                                    <i class="bi bi-book-fill me-2"></i>Book Tracking
-                                </h4>
-                                <h5 class="text-muted">Available Books</h5>
-                                <div class="list-group list-group-flush">
-                                    <div th:each="book : ${books}" class="list-group-item book-item py-3">
-                                        <strong th:text="${book.title}" class="d-block"></strong>
-                                        <small class="text-muted" th:text="'(' + ${book.type} + ')'"></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error Message -->
-                <div th:if="${errorMessage}" class="alert alert-danger mt-4" th:text="${errorMessage}"></div>
-
-                <div class="d-flex flex-wrap gap-3 mt-4">
-<!--                    <form th:action="@{/logout}" method="post">-->
-<!--                        <button type="submit" class="btn btn-danger">-->
-<!--                            <i class="bi bi-box-arrow-right me-2"></i>Logout-->
-<!--                        </button>-->
-<!--                    </form>-->
-
-                    <a th:href="@{/dashboard}" class="btn btn-outline-primary">
-                        <i class="bi bi-book me-2"></i>Book Dashboard
-                    </a>
-
-                    <form th:action="@{/borrowlogs}" method="get">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-list-check me-2"></i>View Borrow Logs
-                        </button>
-                    </form>
-                </div>
-            </div>
+  <!-- Header -->
+  <header class="flex justify-between items-center p-4 max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold text-indigo-700">Library Management Dashboard</h1>
+    <div class="flex items-center space-x-4">
+      <!-- Profile Image Dropdown -->
+      <div class="relative" x-data="{ open: false }">
+        <button @click="open = !open" class="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md focus:outline-none">
+          <img th:if="${loggedInUser != null}" 
+               th:src="@{${loggedInUser.profileImagePath}}" 
+               onerror="this.src='https://i.postimg.cc/T1X2XMq7/Untitled.jpg'" 
+               alt="Profile" 
+               class="w-10 h-10 rounded-full object-cover">
+        </button>
+        <!-- Dropdown -->
+        <div x-show="open" @click.away="open = false"
+             class="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg py-2 z-50">
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-100 rounded-lg">Logout</button>
+          </form>
         </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="max-w-7xl mx-auto px-4">
+    <div th:if="${errorMessage}" class="bg-red-100 text-red-700 px-4 py-2 rounded-md mb-4 text-center" th:text="${errorMessage}"></div>
+  </div>
+
+  <!-- Dashboard Cards -->
+  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    
+    <!-- Users Card -->
+    <div class="bg-white/80 backdrop-blur-md shadow-lg rounded-2xl border-l-4 border-indigo-500 p-6">
+      <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2h5m4-16a4 4 0 110 8 4 4 0 010-8z" />
+        </svg>
+        User Management
+      </h2>
+      <h3 class="text-gray-500 mb-3">Registered Users</h3>
+      <div class="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+        <div th:each="user : ${users}" class="py-3 flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-2">
+          <img th:src="@{${user.profileImagePath}}" alt="Profile" 
+               onerror="this.src='https://i.postimg.cc/T1X2XMq7/Untitled.jpg'" 
+               class="w-10 h-10 rounded-full object-cover border-2 border-indigo-500">
+          <div>
+            <span class="font-medium" th:text="${user.name}"></span>
+            <small class="block text-gray-400" th:text="'(' + ${user.type} + ')'"></small>
+          </div>
+        </div>
+      </div>
+      <!-- Users Pagination -->
+      <div class="flex justify-center mt-3 space-x-2">
+        <a th:if="${currentPageUsers > 1}" th:href="@{|/facade?pageUsers=${currentPageUsers-1}|}" 
+           class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200">&laquo; Prev</a>
+        <span class="px-2 py-1 bg-indigo-200 text-indigo-800 rounded" th:text="${currentPageUsers}"></span>
+        <a th:if="${currentPageUsers < totalPagesUsers}" th:href="@{|/facade?pageUsers=${currentPageUsers+1}|}" 
+           class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200">Next &raquo;</a>
+      </div>
     </div>
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Books Card -->
+    <div class="bg-white/80 backdrop-blur-md shadow-lg rounded-2xl border-l-4 border-green-500 p-6">
+      <h2 class="text-xl font-semibold text-green-700 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20l9-5-9-5-9 5 9 5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12l9-5-9-5-9 5 9 5z" />
+        </svg>
+        Book Tracking
+      </h2>
+      <h3 class="text-gray-500 mb-3">Available Books</h3>
+      <div class="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+        <div th:each="book : ${books}" class="py-3 px-2 hover:bg-gray-50 rounded-lg flex items-center gap-3">
+          <!-- Cover Image -->
+          <img th:if="${book.coverImagePath}" th:src="${book.coverImagePath}" 
+               onerror="this.src='https://i.postimg.cc/T1X2XMq7/Untitled.jpg'" 
+               alt="Book Cover" 
+               class="w-12 h-16 object-cover rounded-md border border-green-400">
+          <div>
+            <span class="font-medium" th:text="${book.title}">Book Title</span>
+            <small class="block text-gray-400" th:text="'(' + ${book.type} + ')'">Book Type</small>
+          </div>
+        </div>
+      </div>
+      <!-- Books Pagination -->
+      <div class="flex justify-center mt-3 space-x-2">
+        <a th:if="${currentPageBooks > 1}" th:href="@{|/facade?pageBooks=${currentPageBooks-1}|}" 
+           class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200">&laquo; Prev</a>
+        <span class="px-2 py-1 bg-green-200 text-green-800 rounded" th:text="${currentPageBooks}"></span>
+        <a th:if="${currentPageBooks < totalPagesBooks}" th:href="@{|/facade?pageBooks=${currentPageBooks+1}|}" 
+           class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200">Next &raquo;</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer Buttons -->
+  <div class="max-w-7xl mx-auto px-4 mt-6 flex flex-wrap gap-3">
+    <a th:href="@{/dashboard}" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition flex items-center gap-2">
+      <span>Book Dashboard</span>
+    </a>
+    <form th:action="@{/borrowlogs}" method="get">
+      <button type="submit" class="px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition flex items-center gap-2">
+        <span>View Borrow Logs</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Alpine.js for dropdown -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
 </body>
 </html>

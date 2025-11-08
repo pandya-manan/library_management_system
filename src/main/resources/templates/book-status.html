@@ -1,73 +1,110 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Book Status Overview</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+Xq0QsN" crossorigin="anonymous">
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
-
-    h1 {
-      margin-bottom: 30px;
-      color: #343a40;
-    }
-
-    .table {
-      background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .table th {
-      background-color: #343a40;
-      color: #ffffff;
-      text-align: center;
-    }
-
-    .table td {
-      vertical-align: middle;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-      border-color: #6c757d;
-    }
-
-    .btn-secondary:hover {
-      background-color: #5a6268;
-      border-color: #545b62;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Status Overview | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container mt-5">
-	<div th:if="${error}" class="alert alert-warning text-center" role="alert">
-	  <strong th:text="${error}">No books found</strong>
-	</div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 text-gray-800">
 
-    <h1 class="text-center">📚 Book Status Overview</h1>
+  <div class="max-w-7xl mx-auto py-10 px-4">
 
-    <div class="d-flex justify-content-start mb-4">
-      <a th:href="@{/dashboard}" class="btn btn-secondary">← Back to Dashboard</a>
+    <!-- Error Alert -->
+    <div th:if="${error}" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 text-center rounded">
+      <strong th:text="${error}">No books found</strong>
     </div>
 
-    <table th:if="${books}" class="table table-bordered table-hover text-center">
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Enum Status</th>
-          <th>Status Message</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="book : ${books}">
-          <td th:text="${book.title}">Title</td>
-          <td th:text="${book.status}">Status</td>
-          <td th:text="${book.status.message}">Status Message</td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Page Title -->
+    <h1 class="text-3xl font-bold text-indigo-700 text-center mb-8">📚 Book Status Overview</h1>
+
+    <!-- Back Button -->
+    <div class="flex justify-start mb-6">
+      <a th:href="@{/dashboard}" class="px-4 py-2 bg-gray-500 text-white rounded-md shadow hover:bg-gray-600 transition">← Back to Dashboard</a>
+    </div>
+
+    <!-- Books Table -->
+    <div class="overflow-x-auto bg-white/80 backdrop-blur-md shadow-lg rounded-2xl">
+      <table id="booksTable" class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-indigo-600 text-white">
+          <tr>
+            <th class="px-4 py-3 text-left w-1/4">Cover</th>
+            <th class="px-4 py-3 text-left w-1/3">Title</th>
+            <th class="px-4 py-3 text-left w-1/6">Enum Status</th>
+            <th class="px-4 py-3 text-left w-1/3">Status Message</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody" class="divide-y divide-gray-200">
+          <tr th:each="book : ${books}" class="hover:bg-gray-50">
+            <td class="px-4 py-2">
+              <img th:if="${book.coverImagePath}" th:src="${book.coverImagePath}"
+                   onerror="this.src='https://i.postimg.cc/T1X2XMq7/Untitled.jpg'"
+                   alt="Cover Image" class="w-20 h-24 object-cover rounded-md border border-gray-300">
+            </td>
+            <td class="px-4 py-2 font-medium" th:text="${book.title}">Title</td>
+            <td class="px-4 py-2">
+              <span th:text="${book.status}"
+                    th:classappend="${book.status?.name() == 'BORROWED'} ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'">
+                Status
+              </span>
+            </td>
+            <td class="px-4 py-2" th:text="${book.status.message}">Status Message</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div id="paginationControls" class="flex justify-center items-center py-4 space-x-2"></div>
+    </div>
+
   </div>
+
+  <script>
+    // ---- Client-side Pagination ----
+    const rowsPerPage = 5; // Change this to show more/less per page
+    const table = document.getElementById('booksTable');
+    const tableBody = document.getElementById('tableBody');
+    const paginationControls = document.getElementById('paginationControls');
+
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    const totalPages = Math.ceil(rows.length / rowsPerPage);
+
+    function showPage(page) {
+      // hide all rows
+      rows.forEach((row, index) => {
+        row.style.display = (index >= page * rowsPerPage && index < (page + 1) * rowsPerPage) ? '' : 'none';
+      });
+
+      // build pagination buttons
+      paginationControls.innerHTML = '';
+      if(page > 0) {
+        const prev = document.createElement('button');
+        prev.textContent = 'Prev';
+        prev.className = 'px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition';
+        prev.onclick = () => showPage(page - 1);
+        paginationControls.appendChild(prev);
+      }
+
+      for(let i=0; i<totalPages; i++){
+        const btn = document.createElement('button');
+        btn.textContent = i+1;
+        btn.className = i === page ? 'px-3 py-1 bg-indigo-600 text-white rounded' : 'px-3 py-1 bg-white text-indigo-700 border border-gray-300 rounded hover:bg-indigo-200';
+        btn.onclick = () => showPage(i);
+        paginationControls.appendChild(btn);
+      }
+
+      if(page < totalPages - 1){
+        const next = document.createElement('button');
+        next.textContent = 'Next';
+        next.className = 'px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition';
+        next.onclick = () => showPage(page + 1);
+        paginationControls.appendChild(next);
+      }
+    }
+
+    // Initial load
+    showPage(0);
+  </script>
+
 </body>
 </html>

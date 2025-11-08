@@ -1,79 +1,51 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Borrow Logs</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Table specific styles */
-        .logs-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        .logs-table th, .logs-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .logs-table thead {
-            background-color: #f8f9fa;
-        }
-        .status-on-time {
-            color: #28a745;
-            font-weight: 600;
-        }
-        .status-overdue {
-            color: #dc3545;
-            font-weight: 600;
-        }
-        .logs-table tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.03);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Borrow Logs | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-light py-4">
-<div class="container dashboard-container">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="card-title text-primary m-0">Borrow Logs</h2>
-                <a th:href="@{/dashboard}" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-                </a>
-            </div>
-            <div class="table-responsive">
-                <table class="table logs-table">
-                    <thead>
-                    <tr>
-                        <th>Book Title</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Late Fee ($)</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="log : ${borrowLogs}" class="align-middle">
-                        <td th:text="${log.book.title}"></td>
-                        <td th:text="${#temporals.format(log.returnDate, 'MMM dd, yyyy')}"></td>
-                        <td>
-                                    <span th:text="${lateFees.get(log) > 0 ? 'Overdue' : 'On Time'}"
-                                          th:classappend="${lateFees.get(log) > 0 ? ' status-overdue' : ' status-on-time'}"></span>
-                        </td>
-                        <td th:text="${lateFees.get(log)}"></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 text-gray-800">
 
-<!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<!-- Bootstrap JS Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row justify-between items-center p-4 max-w-7xl mx-auto gap-4">
+    <h1 class="text-3xl font-bold text-indigo-700">Borrow Logs</h1>
+    <a th:href="@{/dashboard}" class="px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition flex items-center gap-1">
+      <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+    </a>
+	<a th:href="@{/facade}" class="px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition flex items-center gap-1">
+	      <i class="bi bi-arrow-left-circle"></i> Back to Facade Dashboard
+	    </a>
+  </header>
+
+  <!-- Borrow Logs Table -->
+  <main class="max-w-7xl mx-auto mt-6 bg-white/80 backdrop-blur-md shadow-lg rounded-2xl overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-indigo-600 text-white">
+        <tr>
+          <th class="px-4 py-2 text-left w-1/3">Book Title</th>
+          <th class="px-4 py-2 text-left w-1/4">Due Date</th>
+          <th class="px-4 py-2 text-left w-1/6">Status</th>
+          <th class="px-4 py-2 text-left w-1/6">Late Fee ($)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <tr th:each="log : ${borrowLogs}" class="hover:bg-gray-50 align-middle">
+          <td class="px-4 py-2" th:text="${log.book.title}">Book Title</td>
+          <td class="px-4 py-2" th:text="${#temporals.format(log.returnDate, 'MMM dd, yyyy')}">Due Date</td>
+          <td class="px-4 py-2">
+            <span th:text="${lateFees.get(log) > 0 ? 'Overdue' : 'On Time'}"
+                  th:classappend="${lateFees.get(log) > 0 ? ' text-red-600 font-semibold' : ' text-green-600 font-semibold'}"></span>
+          </td>
+          <td class="px-4 py-2" th:text="${lateFees.get(log)}">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
 </body>
 </html>

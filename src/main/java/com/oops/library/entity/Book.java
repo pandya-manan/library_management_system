@@ -21,6 +21,9 @@ public abstract class Book {
 	@Enumerated(EnumType.STRING)
 	private BookStatus status;
 	
+	@Column(name = "cover_image_url", length = 512)
+    private String coverImagePath;
+	
 	public abstract double getLateFeeRate();
 
 
@@ -73,5 +76,17 @@ public abstract class Book {
 	public void setStatus(BookStatus status) {
 		this.status = status;
 	}
+
+
+	public String getCoverImagePath() {
+		return coverImagePath;
+	}
+
+
+	public void setCoverImagePath(String coverImagePath) {
+		this.coverImagePath = coverImagePath;
+	}
+	
+	
 	
 }

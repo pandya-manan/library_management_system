@@ -21,17 +21,19 @@ public class BookFormDto {
 
     // ANCIENT script fields
     private String originalLanguage;
-
-    // Note: manuscriptFile is handled in controller as MultipartFile
+    
+    // Note: cover image and manuscript files are handled in controller as MultipartFile
 
     // ====================
     // Getters and Setters
     // ====================
 
+
+
     public String getType() {
         return type;
     }
-    public void setType(String type) {
+	public void setType(String type) {
         this.type = type;
     }
 

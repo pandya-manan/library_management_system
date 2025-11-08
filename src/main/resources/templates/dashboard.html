@@ -1,187 +1,182 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Library Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <!-- Embedded Custom Styles -->
-    <style>
-        /* Global font and color alignment */
-        body {
-            background-color: #f4f4f4;
-            font-family: 'Arial', sans-serif;
-            color: #333;
-            padding: 20px;
-        }
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #ffffff;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
-        .dashboard-header .title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: #007bff; /* Blue font */
-        }
-        .dashboard-header .header-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        .dashboard-header .btn {
-            font-family: inherit;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: background-color 0.3s ease;
-        }
-        .dashboard-header .btn:hover {
-            opacity: 0.9;
-        }
-        .book-table {
-            background-color: #ffffff;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .book-table .table-responsive {
-            margin: 0;
-        }
-        .book-table th, .book-table td {
-            vertical-align: middle;
-            padding: 12px 15px;
-            font-size: 0.95rem;
-        }
-        .book-table thead {
-            background-color: #007bff;
-            color: #ffffff;
-        }
-        /* Align header "Actions" to right to match button alignment */
-        .book-table thead th:last-child {
-            text-align: right;
-        }
-        .book-table tbody tr:hover {
-            background-color: rgba(0,0,0,0.03);
-        }
-        /* Align actions to the right within their cell */
-        td:last-child .action-buttons {
-            justify-content: flex-end;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: nowrap;
-        }
-        .action-buttons a,
-        .action-buttons button {
-            font-size: 0.85rem;
-            border-radius: 6px;
-            padding: 0.3rem 0.6rem;
-        }
-        .status-available {
-            color: #28a745;
-            font-weight: 600;
-        }
-        .status-borrowed {
-            color: #dc3545;
-            font-weight: 600;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Dashboard | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div class="container-fluid">
-    <!-- Header Section -->
-    <div class="dashboard-header">
-        <div class="title">Library Dashboard</div>
-        <div class="header-actions">
-            <a th:if="${isLibrarian}" th:href="@{/books/add}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> New Book
-            </a>
-            <form th:action="@{/logout}" method="post">
-                <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 text-gray-800">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row justify-between items-center p-4 max-w-7xl mx-auto gap-4">
+    <h1 class="text-3xl font-bold text-indigo-700">Library Book Dashboard</h1>
+    <div class="flex items-center gap-2 flex-wrap">
+      
+
+      <!-- Facade Button -->
+      <a th:if="${isLibrarian}" th:href="@{/facade}" class="px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition flex items-center gap-1">
+        <i class="bi bi-arrow-left-circle"></i> Facade Dashboard
+      </a>
+
+      <!-- New Book -->
+      <a th:if="${isLibrarian}" th:href="@{/books/add}" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition flex items-center gap-1">
+        <i class="bi bi-plus-circle"></i> New Book
+      </a>
+	  
+	  <!-- Profile Dropdown -->
+	        <div class="relative" x-data="{ open: false }">
+	          <button @click="open = !open" class="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md focus:outline-none">
+	            <img th:if="${loggedInUser != null}" th:src="@{${loggedInUser.profileImagePath}}" 
+	                 onerror="this.src='https://i.postimg.cc/T1X2XMq7/Untitled.jpg'" 
+	                 alt="Profile" class="w-10 h-10 rounded-full object-cover">
+	          </button>
+	          <div x-show="open" @click.away="open = false" 
+	               class="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg py-2 z-50">
+	            <form th:action="@{/logout}" method="post">
+	              <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-100 rounded-lg">Logout</button>
+	            </form>
+	          </div>
+	        </div>
+	  
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="max-w-7xl mx-auto px-4 mt-4 space-y-2">
+    <div th:if="${message}" class="bg-green-100 text-green-800 px-4 py-2 rounded-md text-center" th:text="${message}"></div>
+    <div th:if="${borrowMessage}" class="bg-green-100 text-green-800 px-4 py-2 rounded-md text-center" th:text="${borrowMessage}"></div>
+  </div>
+
+  <!-- Books Table Card -->
+  <div class="max-w-7xl mx-auto mt-6 bg-white/80 backdrop-blur-md shadow-lg rounded-2xl overflow-x-auto">
+    <table id="booksTable" class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-indigo-600 text-white">
+        <tr>
+          <th class="px-4 py-2 text-left w-1/3">Title</th>
+          <th class="px-4 py-2 text-left w-1/5">Author</th>
+          <th class="px-4 py-2 text-left w-1/6">Status</th>
+          <th class="px-4 py-2 text-left w-1/3">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+	        <tr th:each="book : ${books}" th:if="${book.section != 'RESTRICTED'} or ${isLibrarian} or ${isScholar}" class="hover:bg-gray-50">
+          <!-- Title + Cover Image -->
+	        <td class="px-4 py-2 flex items-center gap-3">
+	            <img th:if="${book.coverImagePath}" th:src="${book.coverImagePath}" 
+                 alt="Cover" class="w-12 h-16 object-cover rounded-md border border-gray-300 cursor-pointer" 
+                 onclick="enlargeImage(this)">
+            <span th:text="${book.title}">Book Title</span>
+          </td>
+          <!-- Author -->
+          <td class="px-4 py-2" th:text="${book.author}">Author</td>
+          <!-- Status -->
+          <td class="px-4 py-2">
+            <span th:classappend="${book.status?.name() == 'BORROWED'} ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'" 
+                  th:text="${book.status} ? ${book.status} : 'AVAILABLE'">Status</span>
+          </td>
+          <!-- Actions -->
+          <td class="px-4 py-2">
+            <div class="flex flex-wrap gap-2">
+              <a th:href="@{/books/view/{id}(id=${book.id})}" class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition flex items-center">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a th:if="${isLibrarian}" th:href="@{/books/edit/{id}(id=${book.id})}" class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 transition flex items-center">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form th:if="${isLibrarian}" th:action="@{/books/delete/{id}(id=${book.id})}" method="post" onsubmit="return confirm('Are you sure?');">
+                <button type="submit" class="px-2 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition flex items-center">
+                  <i class="bi bi-trash"></i>
                 </button>
-            </form>
-        </div>
-    </div>
+              </form>
+              <form th:if="${(isScholar or isGuest) and (book.status?.name() != 'BORROWED' and book.status?.name() != 'RESTORATION_NEEDED')}" th:action="@{/books/borrow/{id}(id=${book.id})}" method="post" class="flex items-center gap-2">
+                <select name="borrowType" required class="border border-gray-300 rounded-md px-2 py-1 text-sm">
+                  <option value="" disabled selected>Type</option>
+                  <option value="academic">Academic</option>
+                  <option value="public">Public</option>
+                  <option value="restricted">Restricted</option>
+                </select>
+                <button type="submit" class="px-2 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition flex items-center">
+                  <i class="bi bi-bookmark-check"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Alerts -->
-    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert" th:text="${message}">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${borrowMessage}" class="alert alert-success alert-dismissible fade show" role="alert" th:text="${borrowMessage}">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+    <!-- Pagination -->
+    <div class="flex justify-center gap-2 my-4" id="pagination"></div>
+  </div>
 
-    <!-- Table to display books -->
-    <div class="book-table mt-3">
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                <tr>
-                    <th style="width:30%;">Title</th>
-                    <th style="width:20%;">Author</th>
-                    <th style="width:15%;">Status</th>
-                    <th style="width:35%;">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="book : ${books}" th:if="${book.section != 'RESTRICTED'} or ${isLibrarian} or ${isScholar}" th:classappend="${book.status?.name() == 'BORROWED'} ? 'table-secondary' : ''">
-                    <td th:text="${book.title}">Title</td>
-                    <td th:text="${book.author}">Author</td>
-                    <td>
-                        <span th:classappend="${book.status?.name() == 'BORROWED'} ? 'status-borrowed' : 'status-available'" th:text="${book.status} ? ${book.status} : 'AVAILABLE'">Status</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <a th:href="@{/books/view/{id}(id=${book.id})}" class="btn btn-info btn-sm">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a th:if="${isLibrarian}" th:href="@{/books/edit/{id}(id=${book.id})}" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form th:if="${isLibrarian}" th:action="@{/books/delete/{id}(id=${book.id})}" method="post" onsubmit="return confirm('Are you sure?');">
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                            <form th:if="${(isScholar or isGuest) and (book.status?.name() != 'BORROWED' and book.status?.name() != 'RESTORATION_NEEDED')}" th:action="@{/books/borrow/{id}(id=${book.id})}" method="post" class="d-flex align-items-center gap-2">
-                                <select name="borrowType" required class="form-select form-select-sm">
-                                    <option value="" disabled selected>Type</option>
-                                    <option value="academic">Academic</option>
-                                    <option value="public">Public</option>
-                                    <option value="restricted">Restricted</option>
-                                </select>
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <i class="bi bi-bookmark-check"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+  <!-- Footer Buttons -->
+  <div class="max-w-7xl mx-auto px-4 mt-4 flex flex-wrap gap-2">
+    <a th:if="${isScholar or isGuest}" th:href="@{/user/borrowed-books}" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">My Borrowed Books</a>
+    <a th:if="${isLibrarian}" th:href="@{/notifications}" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition">Notifications</a>
+    <a th:if="${isLibrarian}" th:href="@{/books/status}" class="px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">Book Status</a>
+  </div>
 
-<div th:if="${isScholar or isGuest}">
-    <a th:href="@{/user/borrowed-books}" class="btn btn-outline-info">My Borrowed Books</a>
-</div>
-<div th:if="${isLibrarian}">
-    <a th:href="@{/notifications}" class="btn btn-outline-info">Notifications</a>
-    <a th:href="@{/books/status}" class="btn btn-outline-info">Book Status</a>
-	<a th:href="@{/facade}" class="btn btn-outline-info">User and Book Management</a>
-</div>
-<!-- Bootstrap Icons & JS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <!-- Alpine.js for dropdown -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- JS Pagination & Image Enlarge -->
+  <script>
+    const rowsPerPage = 5;
+    const table = document.getElementById("booksTable");
+    const tbody = table.getElementsByTagName("tbody")[0];
+    const rows = Array.from(tbody.getElementsByTagName("tr"));
+    const pagination = document.getElementById("pagination");
+
+    function displayPage(page = 1) {
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      rows.forEach((row, idx) => row.style.display = (idx >= start && idx < end) ? "" : "none");
+
+      // Update pagination buttons
+      pagination.innerHTML = "";
+      const totalPages = Math.ceil(rows.length / rowsPerPage);
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = "px-3 py-1 rounded-md border border-gray-300 bg-white hover:bg-indigo-100";
+        if (i === page) btn.classList.add("bg-indigo-500", "text-white", "border-indigo-500");
+        btn.onclick = () => displayPage(i);
+        pagination.appendChild(btn);
+      }
+    }
+
+    displayPage();
+
+    // Enlarge image on click
+    function enlargeImage(img) {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = "100%";
+      overlay.style.height = "100%";
+      overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      overlay.style.zIndex = 1000;
+      overlay.onclick = () => document.body.removeChild(overlay);
+
+      const enlargedImg = document.createElement("img");
+      enlargedImg.src = img.src;
+      enlargedImg.style.maxWidth = "80%";
+      enlargedImg.style.maxHeight = "80%";
+      enlargedImg.style.borderRadius = "10px";
+      enlargedImg.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+      overlay.appendChild(enlargedImg);
+
+      document.body.appendChild(overlay);
+    }
+  </script>
+
 </body>
 </html>
