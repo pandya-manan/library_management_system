@@ -1,17 +1,15 @@
 package com.oops.library.controller;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.oops.library.command.ReturnBookCommand;
 import com.oops.library.design.patterns.BookFactory;
@@ -45,7 +45,10 @@ import com.oops.library.repository.NotificationRepository;
 import com.oops.library.repository.UserRepository;
 import com.oops.library.service.BookService;
 import com.oops.library.service.BorrowLogService;
+import com.oops.library.service.EmailService;
+import com.oops.library.service.FileStorageService;
 import com.oops.library.service.RegistrationService;
+import com.oops.library.service.UserInformationService;
 import com.oops.library.strategy.LendingStrategy;
 import com.oops.library.command.*;
 
@@ -57,6 +60,10 @@ public class AuthController {
     private final FacadeDashboard facadeDashboard;
     private final NotificationRepository notificationRepository;
     private final LibrarianNotifier librarianNotifier;
+    private final UserInformationService userInfoService;
+    private final EmailService emailService;
+    private final FileStorageService fileStorageService;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     
     @Autowired
     private BookService bookService;
@@ -77,13 +84,22 @@ public class AuthController {
    private BookRepository bookRepository;
 
     public AuthController(RegistrationService registrationService,
-                          BookRepository bookRepo,FacadeDashboard facadeDashboard,NotificationRepository notificationRepository,LibrarianNotifier librarianNotifier) {
+                          BookRepository bookRepo,FacadeDashboard facadeDashboard,NotificationRepository notificationRepository,LibrarianNotifier librarianNotifier,UserInformationService userInfoService, FileStorageService fileStorageService, EmailService emailService) {
         this.registrationService = registrationService;
         // bootstrap singleton with your JPA repository
         this.catalog = CatalogManager.getInstance(bookRepo);
         this.facadeDashboard=facadeDashboard;
         this.notificationRepository = notificationRepository;
         this.librarianNotifier=librarianNotifier;
+        this.userInfoService=userInfoService;
+        this.fileStorageService = fileStorageService;
+        this.emailService = emailService;
+    }
+    
+    @GetMapping("/welcome")
+    public String showLandingPage()
+    {
+    	return "welcome";
     }
 
     //SIGN UP - show SIGN UP FORM//
@@ -96,13 +112,18 @@ public class AuthController {
     //AFTER FILLING THE SIGN UP FORM, POST IT INTO THE DATABASE//
     @PostMapping("/signup")
     public String registerUser(@ModelAttribute RegistrationDto dto,
+                               @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
                                Model model,
                                RedirectAttributes flash) {
         try {
+            String storedProfileImagePath = fileStorageService.storeFile(profileImage, "profile-images");
+            dto.setProfileImagePath(storedProfileImagePath);
+            log.debug("Registering user with email={} role={} storedImage={}", dto.getEmail(), dto.getRole(), storedProfileImagePath);
             registrationService.registerUser(dto);
             flash.addFlashAttribute("success", "Sign up completed");
             return "redirect:/login";
         } catch (Exception e) {
+            log.error("Registration failed for email {}", dto.getEmail(), e);
             model.addAttribute("error", "Registration failed: " + e.getMessage());
             return "signup";
         }
@@ -121,21 +142,57 @@ public class AuthController {
      * Librarians get Add/Edit/Delete buttons;
      * Scholars/Guests only see the list.
      */
+//    @GetMapping({"/home", "/dashboard"})
+//    public String dashboard(Model model, Authentication auth) {
+//        List<Book> books = catalog.getAllBooks();
+//        boolean isLibrarian = auth.getAuthorities()
+//                .contains(new SimpleGrantedAuthority("ROLE_LIBRARIAN"));
+//        boolean isScholar=auth.getAuthorities()
+//                .contains(new SimpleGrantedAuthority("ROLE_SCHOLAR"));
+//        boolean isGuest=auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST"));
+//
+//        model.addAttribute("books", books);
+//        model.addAttribute("isLibrarian", isLibrarian);
+//        model.addAttribute("isScholar", isScholar);
+//        model.addAttribute("isGuest", isGuest);
+//        return "dashboard";
+//    }
+    
     @GetMapping({"/home", "/dashboard"})
-    public String dashboard(Model model, Authentication auth) {
-        List<Book> books = catalog.getAllBooks();
-        boolean isLibrarian = auth.getAuthorities()
-                .contains(new SimpleGrantedAuthority("ROLE_LIBRARIAN"));
-        boolean isScholar=auth.getAuthorities()
-                .contains(new SimpleGrantedAuthority("ROLE_SCHOLAR"));
-        boolean isGuest=auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST"));
+    public String dashboard(Model model) {
+        try {
+            // Fetch all books from catalog
+            List<Book> books = catalog.getAllBooks();
+            model.addAttribute("books", books);
 
-        model.addAttribute("books", books);
-        model.addAttribute("isLibrarian", isLibrarian);
-        model.addAttribute("isScholar", isScholar);
-        model.addAttribute("isGuest", isGuest);
+            // Get logged-in user
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                String email = auth.getName(); // assuming username is email
+                User loggedInUser = userInfoService.findByEmail(email); // fetch from DB
+                model.addAttribute("loggedInUser", loggedInUser);
+            }
+
+            // Roles
+            boolean isLibrarian = auth.getAuthorities()
+                    .contains(new SimpleGrantedAuthority("ROLE_LIBRARIAN"));
+            boolean isScholar = auth.getAuthorities()
+                    .contains(new SimpleGrantedAuthority("ROLE_SCHOLAR"));
+            boolean isGuest = auth.getAuthorities()
+                    .contains(new SimpleGrantedAuthority("ROLE_GUEST"));
+
+            model.addAttribute("isLibrarian", isLibrarian);
+            model.addAttribute("isScholar", isScholar);
+            model.addAttribute("isGuest", isGuest);
+
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error fetching books or user information.");
+        }
+
         return "dashboard";
     }
+
+
 
     /**
      * Show "Add Book" form (only for librarians)
@@ -153,23 +210,19 @@ public class AuthController {
      */
     @PostMapping("/books/add")
     public String addBook(@ModelAttribute BookFormDto form,
-                          @RequestParam("manuscriptFile") MultipartFile file) throws IOException {
+                          @RequestParam(value = "manuscriptFile", required = false) MultipartFile manuscriptFile,
+                          @RequestParam(value = "coverImage", required = false) MultipartFile coverImage) {
 
-        // Only if type is ANCIENT and file is not empty
         String manuscriptPath = null;
-        if ("ANCIENT".equalsIgnoreCase(form.getType()) && !file.isEmpty()) {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
+        if ("ANCIENT".equalsIgnoreCase(form.getType())) {
+            manuscriptPath = fileStorageService.storeFile(manuscriptFile, "book-manuscripts");
+        }
 
-            File uploadFolder = new File(uploadDir);
-            if (!uploadFolder.exists()) {
-                uploadFolder.mkdirs();  // create if not exists
-            }
+        String coverImagePath = fileStorageService.storeFile(coverImage, "book-covers");
 
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            File dest = new File(uploadFolder, filename);
-            file.transferTo(dest);
-
-            manuscriptPath = "/uploads/" + filename;
+        Boolean inLibraryUseOnly = form.isInLibraryUseOnly();
+        if ("RARE".equalsIgnoreCase(form.getType()) && !Boolean.TRUE.equals(inLibraryUseOnly)) {
+            inLibraryUseOnly = true;
         }
 
         // Create book using factory
@@ -179,11 +232,13 @@ public class AuthController {
             form.getAuthor(),
             form.isDigitalAccess(),
             form.getPreservationMethod(),
+            inLibraryUseOnly,
             form.getOriginalLanguage(),
             manuscriptPath,
             form.getStatus(),
             form.getSection(),
-            form.getIsbn()
+            form.getIsbn(),
+            coverImagePath
         );
 
         // Additional defaults for AncientScript
@@ -257,12 +312,13 @@ public class AuthController {
                            @RequestParam("isbn") String isbn,
                            @RequestParam("section") String section,
                            @RequestParam("status") String status,
+                           @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
                            @RequestParam(value = "digitalAccess", required = false) Boolean digitalAccess,
                            @RequestParam(value = "preservationMethod", required = false) String preservationMethod,
                            @RequestParam(value = "inLibraryUseOnly", required = false) Boolean inLibraryUseOnly,
                            @RequestParam(value = "originalLanguage", required = false) String originalLanguage,
-                           @RequestParam(value = "manuscriptFile", required = false) MultipartFile file
-    ) throws IOException {
+                           @RequestParam(value = "manuscriptFile", required = false) MultipartFile manuscriptFile
+    ) {
 
         Book existing = catalog.getBookById(id);
         if (existing == null) {
@@ -276,6 +332,12 @@ public class AuthController {
         existing.setSection(section);
         existing.setStatus(BookStatus.valueOf(status));
 
+        if (coverImage != null && !coverImage.isEmpty()) {
+            String newCoverImagePath = fileStorageService.storeFile(coverImage, "book-covers");
+            fileStorageService.deleteFile(existing.getCoverImagePath());
+            existing.setCoverImagePath(newCoverImagePath);
+        }
+
         // Specific subclass fields
         if (existing instanceof GeneralBook general) {
             general.setDigitalAccess(Boolean.TRUE.equals(digitalAccess));
@@ -285,13 +347,10 @@ public class AuthController {
         } else if (existing instanceof AncientScript ancient) {
             ancient.setOriginalLanguage(originalLanguage);
 
-            if (file != null && !file.isEmpty()) {
-                String uploadDir = "uploads/";
-                String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                File dest = new File(uploadDir + filename);
-                dest.getParentFile().mkdirs();
-                file.transferTo(dest);
-                ancient.setManuscriptPath("/" + uploadDir + filename);
+            if (manuscriptFile != null && !manuscriptFile.isEmpty()) {
+                String manuscriptPath = fileStorageService.storeFile(manuscriptFile, "book-manuscripts");
+                fileStorageService.deleteFile(ancient.getManuscriptPath());
+                ancient.setManuscriptPath(manuscriptPath);
             }
         }
 
@@ -302,25 +361,76 @@ public class AuthController {
     
     @PostMapping("/books/delete/{id}")
     public String deleteBook(@PathVariable Long id, RedirectAttributes redirectAttrs) {
-        catalog.removeBook(id); // implement this in your Catalog class
+        Book book = catalog.getBookById(id);
+        if (book != null) {
+            fileStorageService.deleteFile(book.getCoverImagePath());
+            if (book instanceof AncientScript ancient) {
+                fileStorageService.deleteFile(ancient.getManuscriptPath());
+            }
+        }
+        catalog.removeBook(id);
         redirectAttrs.addFlashAttribute("message", "Book deleted successfully.");
         return "redirect:/dashboard";
     }
 
+//    @GetMapping("/facade")
+//    public String showDashboard(Model model)
+//    {
+//    	try
+//    	{
+//    		model.addAttribute("books", facadeDashboard.getBooksAndUsers().get("books"));
+//    		model.addAttribute("users",facadeDashboard.getBooksAndUsers().get("users"));
+//    	}
+//    	catch(EnchantedLibraryException e)
+//    	{
+//    		model.addAttribute("errorMessage", "Error fetching either books or users");
+//    	}
+//    	return "facade-dashboard";
+//    }
+    
+//    @GetMapping("/facade")
+//    public String showDashboard(Model model) {
+//        try {
+//            // Add users and books
+//            model.addAttribute("books", facadeDashboard.getBooksAndUsers().get("books"));
+//            model.addAttribute("users", facadeDashboard.getBooksAndUsers().get("users"));
+//
+//            // Add logged-in user
+//            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//            if (auth != null && auth.getPrincipal() instanceof User) {
+//                User loggedInUser = (User) auth.getPrincipal();
+//                model.addAttribute("loggedInUser", loggedInUser);
+//            }
+//
+//        } catch (EnchantedLibraryException e) {
+//            model.addAttribute("errorMessage", "Error fetching either books or users");
+//        }
+//        return "facade-dashboard";
+//    }
+    
     @GetMapping("/facade")
-    public String showDashboard(Model model)
-    {
-    	try
-    	{
-    		model.addAttribute("books", facadeDashboard.getBooksAndUsers().get("books"));
-    		model.addAttribute("users",facadeDashboard.getBooksAndUsers().get("users"));
-    	}
-    	catch(EnchantedLibraryException e)
-    	{
-    		model.addAttribute("errorMessage", "Error fetching either books or users");
-    	}
-    	return "facade-dashboard";
+    public String showDashboard(Model model) {
+        try {
+            // Add users and books
+            model.addAttribute("books", facadeDashboard.getBooksAndUsers().get("books"));
+            model.addAttribute("users", facadeDashboard.getBooksAndUsers().get("users"));
+
+            // Fetch logged-in user from DB
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                String email = auth.getName(); // username is email
+                User loggedInUser = userInfoService.findByEmail(email);// fetch from DB
+                model.addAttribute("loggedInUser", loggedInUser);
+            }
+
+        } catch (EnchantedLibraryException e) {
+            model.addAttribute("errorMessage", "Error fetching either books or users");
+        }
+
+        return "facade-dashboard";
     }
+
+
     
     @PostMapping("/books/borrow/{id}")
     public String borrowBook(@PathVariable("id") Long bookId,@RequestParam("borrowType") String borrowType, Authentication authentication, Model model,RedirectAttributes redirectAttrs) {
@@ -354,17 +464,22 @@ public class AuthController {
         bookService.saveBook(book);
 
         // Create a new BorrowLog entry
+        LocalDate borrowDate = LocalDate.now();
+        LocalDate dueDate = strategy.calculateReturnDate(borrowDate);
+
         BorrowLog borrowLog = new BorrowLog();
         borrowLog.setBorrower(loggedInUser);
         borrowLog.setBook(book);
-        borrowLog.setBorrowDate(LocalDate.now());
-        borrowLog.setReturnDate(strategy.calculateReturnDate(LocalDate.now()));
+        borrowLog.setBorrowDate(borrowDate);
+        borrowLog.setReturnDate(dueDate);
         borrowLog.setReturned(false);
         borrowLogService.saveBorrowLog(borrowLog);
 
+        emailService.sendBorrowConfirmation(loggedInUser.getEmail(), loggedInUser.getName(), book.getTitle(), dueDate);
+
         redirectAttrs.addFlashAttribute("message", "You have successfully borrowed the book: " + book.getTitle());
         redirectAttrs.addFlashAttribute("borrowMessage", 
-                "Borrowed on: " + LocalDate.now() + " | Return by: " + strategy.calculateReturnDate(LocalDate.now()));
+                "Borrowed on: " + borrowDate + " | Return by: " + dueDate);
         return "redirect:/dashboard";
 
     }
@@ -418,6 +533,10 @@ public class AuthController {
 
             Command command = new ReturnBookCommand(log, log.getBook(), borrowLogRepository, bookRepository);
             command.execute();
+
+            emailService.sendReturnConfirmation(log.getBorrower().getEmail(),
+                    log.getBorrower().getName(),
+                    log.getBook().getTitle());
 
             return "redirect:/user/borrowed-books?success";
         }

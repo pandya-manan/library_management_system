@@ -6,6 +6,7 @@ public class RegistrationDto {
 	private String email;
 	private String password;
 	private String role;
+	private String profileImagePath;
 	public String getName() {
 		return name;
 	}
@@ -30,6 +31,13 @@ public class RegistrationDto {
 	public void setRole(String role) {
 		this.role = role;
 	}
+	public String getProfileImagePath() {
+		return profileImagePath;
+	}
+	public void setProfileImagePath(String profileImagePath) {
+		this.profileImagePath = profileImagePath;
+	}
+	
 	
 	
 

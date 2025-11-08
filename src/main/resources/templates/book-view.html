@@ -1,91 +1,62 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Book Details</title>
-	<!-- Bootstrap CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-	<style>
-		/* Match dashboard/facade theme */
-        body {
-          background-color: #f4f4f4;
-          font-family: 'Arial', sans-serif;
-          color: #333;
-          padding: 20px;
-        }
-        .details-card {
-          background-color: #ffffff;
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 1.5rem;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .details-header {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #007bff;
-          margin-bottom: 1rem;
-        }
-        .details-list p {
-          margin-bottom: 0.75rem;
-          font-size: 0.95rem;
-        }
-        .details-list strong {
-          width: 140px;
-          display: inline-block;
-          color: #555;
-        }
-        .back-btn {
-          display: inline-block;
-          margin-top: 1rem;
-          text-decoration: none;
-        }
-        .back-btn .btn {
-          border-radius: 6px;
-          padding: 0.5rem 1rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          font-family: inherit;
-        }
-	</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Details | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div class="details-card">
-	<div class="details-header">Book Details</div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 text-gray-800 flex items-center justify-center p-4">
 
-	<div class="details-list">
-		<p><strong>Title:</strong> <span th:text="${book.title}"></span></p>
-		<p><strong>Author:</strong> <span th:text="${book.author}"></span></p>
-		<p><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></p>
-		<p><strong>Status:</strong> <span th:text="${book.status} ? ${book.status} : 'AVAILABLE'"></span></p>
-		<p><strong>Section:</strong> <span th:text="${book.section}"></span></p>
+  <div class="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl max-w-md w-full p-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col items-center mb-6">
+      <h1 class="text-2xl font-bold text-indigo-700 mb-4">Book Details</h1>
+      
+      <!-- Cover Image -->
+      <img th:if="${book.coverImagePath}" th:src="${book.coverImagePath}" alt="Cover Image"
+           class="w-32 h-44 object-cover rounded-lg border border-gray-300 shadow-sm mb-4">
+    </div>
 
-		<div th:if="${bookType == 'GeneralBook'}">
-			<p><strong>Digital Access:</strong> <span th:text="${book.digitalAccess}"></span></p>
-		</div>
+    <!-- Details -->
+    <div class="space-y-3 text-gray-700">
+      <p><span class="font-semibold text-gray-600">Title:</span> <span th:text="${book.title}">Book Title</span></p>
+      <p><span class="font-semibold text-gray-600">Author:</span> <span th:text="${book.author}">Author</span></p>
+      <p><span class="font-semibold text-gray-600">ISBN:</span> <span th:text="${book.isbn}">ISBN</span></p>
+      <p><span class="font-semibold text-gray-600">Status:</span> 
+        <span th:text="${book.status} ? ${book.status} : 'AVAILABLE'" 
+              th:classappend="${book.status?.name() == 'BORROWED'} ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'">Status</span>
+      </p>
+      <p><span class="font-semibold text-gray-600">Section:</span> <span th:text="${book.section}">Section</span></p>
 
-		<div th:if="${bookType == 'RareBook'}">
-			<p><strong>Preservation:</strong> <span th:text="${book.preservationMethod}"></span></p>
-			<p><strong>In-Library Use Only:</strong> <span th:text="${book.inLibraryUseOnly}"></span></p>
-		</div>
+      <div th:if="${bookType == 'GeneralBook'}">
+        <p><span class="font-semibold text-gray-600">Digital Access:</span> <span th:text="${book.digitalAccess}">true/false</span></p>
+      </div>
 
-		<div th:if="${bookType == 'AncientScript'}">
-			<p><strong>Original Language:</strong> <span th:text="${book.originalLanguage}"></span></p>
-			<p><strong>Translation Notes:</strong> <span th:text="${book.translationNotes}"></span></p>
-			<p><strong>Archived:</strong> <span th:text="${book.archived}"></span></p>
-		</div>
-	</div>
+      <div th:if="${bookType == 'RareBook'}">
+        <p><span class="font-semibold text-gray-600">Preservation:</span> <span th:text="${book.preservationMethod}">Method</span></p>
+        <p><span class="font-semibold text-gray-600">In-Library Use Only:</span> <span th:text="${book.inLibraryUseOnly}">true/false</span></p>
+      </div>
 
-	<a th:href="@{/dashboard}" class="back-btn">
-		<button type="button" class="btn btn-outline-primary">
-			<i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-		</button>
-	</a>
-</div>
+      <div th:if="${bookType == 'AncientScript'}">
+        <p><span class="font-semibold text-gray-600">Original Language:</span> <span th:text="${book.originalLanguage}">Language</span></p>
+        <p><span class="font-semibold text-gray-600">Translation Notes:</span> <span th:text="${book.translationNotes}">Notes</span></p>
+        <p><span class="font-semibold text-gray-600">Archived:</span> <span th:text="${book.archived}">true/false</span></p>
+      </div>
+    </div>
 
-<!-- Bootstrap Icons & JS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Back Button -->
+    <div class="mt-6 text-center">
+      <a th:href="@{/dashboard}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
+        <i class="bi bi-arrow-left-circle me-2"></i> Back to Dashboard
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
 </body>
 </html>

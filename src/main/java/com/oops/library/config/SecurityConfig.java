@@ -1,7 +1,6 @@
 package com.oops.library.config;
 
 import com.oops.library.service.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,27 +10,33 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomLoginSuccessHandler customLoginSuccessHandler;
+
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService,
+                          CustomLoginSuccessHandler customLoginSuccessHandler) {
+        this.customUserDetailsService = customUserDetailsService;
+        this.customLoginSuccessHandler = customLoginSuccessHandler;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/signup", "/login", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/welcome","/signup", "/login", "/forgot-password", "/reset-password",
+                        "/css/**", "/js/**", "/uploads/**").permitAll()
                 .requestMatchers("/books/add", "/books/edit/**", "/books/delete/**").hasRole("LIBRARIAN")
                 .anyRequest().authenticated() // default to authenticated for all other requests
             )
             .formLogin(form -> form
                 .loginPage("/login")
 //                .defaultSuccessUrl("/home", true)
-                .successHandler(customAuthenticationSuccessHandler())
+                .successHandler(customLoginSuccessHandler)
                 .permitAll()
             )
             .logout(logout -> logout
@@ -44,11 +49,10 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-            .userDetailsService(customUserDetailsService)
-            .passwordEncoder(passwordEncoder())
-            .and()
-            .build();
+        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        builder.userDetailsService(customUserDetailsService)
+                .passwordEncoder(passwordEncoder());
+        return builder.build();
     }
 
     @Bean
@@ -56,9 +60,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
     
-    @Bean
-    public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
-        return new CustomLoginSuccessHandler();
-    }
-
 }

@@ -11,14 +11,20 @@ public abstract class User {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
+	@Column(nullable = false)
 	private String name;
 	
+	@Column(unique = true, nullable = false)
 	private String email;
 	
+	@Column(nullable = false)
 	private String password;
 	
 	@Enumerated(EnumType.STRING)
 	private Role role;
+	
+	@Column(name = "profile_image_url", length = 512)
+    private String profileImagePath;
 	
 	public abstract String getType();
 
@@ -60,6 +66,14 @@ public abstract class User {
 
 	public void setRole(Role role) {
 		this.role = role;
+	}
+
+	public String getProfileImagePath() {
+		return profileImagePath;
+	}
+
+	public void setProfileImagePath(String profileImagePath) {
+		this.profileImagePath = profileImagePath;
 	}
 	
 	

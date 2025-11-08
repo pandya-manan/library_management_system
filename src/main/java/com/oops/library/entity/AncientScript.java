@@ -38,8 +38,7 @@ public class AncientScript extends Book{
 		this.translationNotes = translationNotes;
 	}
 	public void setManuscriptPath(String manuscriptPath) {
-		// TODO Auto-generated method stub
-		
+		this.manuscriptPath = manuscriptPath;
 	}
 	@Override
 	public String getType() {

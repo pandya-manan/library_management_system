@@ -1,46 +1,58 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | LibraryHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-light">
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-blue-500 to-blue-600">
 
-<div class="container mt-5">
-    <div class="card mx-auto shadow rounded" style="max-width: 400px;">
-        <div class="card-body">
-            <h4 class="text-center mb-4">Login</h4>
+  <div class="bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-[90%] max-w-md mx-auto text-gray-800">
+    <h2 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-indigo-500 to-blue-500 bg-clip-text text-transparent">
+      Welcome Back
+    </h2>
 
-            <!-- Error Message -->
-            <div th:if="${param.error}" class="alert alert-danger" role="alert">
-                Invalid credentials.
-            </div>
-
-            <!-- Logout Message -->
-            <div th:if="${param.logout}" class="alert alert-success" role="alert">
-                You have been logged out successfully.
-            </div>
-
-            <form th:action="@{/login}" method="post">
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="text" name="username" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Login</button>
-            </form>
-
-            <div class="text-center mt-3">
-                <a th:href="@{/signup}">Don't have an account? Sign up</a>
-            </div>
-        </div>
+    <!-- Error Message -->
+    <div th:if="${param.error}" class="bg-red-100 text-red-700 px-4 py-2 rounded-lg mb-3 text-sm text-center">
+      Invalid credentials. Please try again.
     </div>
-</div>
+
+    <!-- Logout Message -->
+    <div th:if="${param.logout}" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg mb-3 text-sm text-center">
+      You have been logged out successfully.
+    </div>
+
+    <form th:action="@{/login}" method="post" class="space-y-5">
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input type="text" id="username" name="username" placeholder="Enter your email"
+               class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+               required>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password"
+               class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+               required>
+        <div class="text-right mt-2">
+          <a th:href="@{/forgot-password}" class="text-sm text-indigo-600 hover:text-indigo-800">Forgot password?</a>
+        </div>
+      </div>
+
+      <button type="submit"
+              class="w-full py-2 font-semibold text-white rounded-xl shadow-md transition duration-300 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600">
+        Login
+      </button>
+    </form>
+
+    <div class="text-center mt-5 text-sm">
+      <p class="text-gray-600">Don't have an account?
+        <a th:href="@{/signup}" class="font-semibold text-blue-600 hover:text-blue-800 transition">Sign up</a>
+      </p>
+    </div>
+  </div>
 
 </body>
 </html>
